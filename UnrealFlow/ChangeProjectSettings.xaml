@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+  xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+  x:Class="UnrealFlow.ChangeProjectSettings"
+  Shell.NavBarIsVisible="False"
+  Title="ProjectSettings">
+  <VerticalStackLayout Padding="30" Spacing="10">
+    <Label
+      x:Name="nameHeader"
+      Text="$"
+      FontSize="Title"
+      VerticalOptions="Center"
+      HorizontalOptions="Center" />
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="40*"/>
+        <ColumnDefinition Width="60*"/>
+      </Grid.ColumnDefinitions>
+      <Label
+        Text="Display Name:"
+        VerticalOptions="Center"
+        Grid.Row="0"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End" />
+      <Entry
+        x:Name="displayName"
+        Grid.Row="0"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+      <Label
+        Text="Sync Name:"
+        VerticalOptions="Center"
+        Grid.Row="1"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End" />
+      <Entry
+        x:Name="syncName"
+        Grid.Row="1"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+      <Label
+        Text="Versions to keep:"
+        VerticalOptions="Center"
+        Grid.Row="2"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End" />
+      <Entry
+        x:Name="versionsToKeep"
+        Grid.Row="2"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+      <Label
+        Text="Project Path:"
+        VerticalOptions="Center"
+        Grid.Row="3"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End" />
+      <HorizontalStackLayout Spacing="10"
+        Grid.Row="3" Grid.Column="1" Margin="0,5,0,5" VerticalOptions="FillAndExpand"  HorizontalOptions="FillAndExpand"
+      >
+        <Entry
+          x:Name="projectPath"
+          VerticalOptions="Center"
+          WidthRequest="345"
+          HorizontalOptions="Start" />
+        <Button
+          Text="..."
+          Padding="10,0"
+          SemanticProperties.Hint="Find project"
+          Clicked="OnLookupProjectPath"/>
+      </HorizontalStackLayout>
+      <Label
+        Text="Sync Paths:"
+        VerticalOptions="Center"
+        Grid.Row="4"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End" />
+      <Entry
+        x:Name="syncPaths"
+        Grid.Row="4"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+    </Grid>
+    <HorizontalStackLayout Padding="50, 50" HorizontalOptions="End" VerticalOptions="End">
+      <Button
+        Text="Canel"
+        Padding="20,0"
+        Margin="20,0"
+        SemanticProperties.Hint="Cancel Changes"
+        Clicked="OnCancel"/>
+      <Button
+        Text="Apply"
+        Padding="20,0"
+        SemanticProperties.Hint="Apply Changes"
+        Clicked="OnApply"/>
+    </HorizontalStackLayout>
+  </VerticalStackLayout>
+</ContentPage>

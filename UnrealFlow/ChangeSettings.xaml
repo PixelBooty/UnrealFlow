@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="UnrealFlow.ChangeSettings"
+             Shell.NavBarIsVisible="False"
+             Title="ChangeSettings">
+  <VerticalStackLayout Padding="30" Spacing="10">
+    <Label
+      Text="Change Settings"
+      VerticalOptions="Center"
+      FontSize="Title"
+      HorizontalOptions="Center"/>
+    <Label
+      Text="Settings in the app data directory in a file called settings.json"
+      VerticalOptions="Center"
+      HorizontalOptions="Center"/>
+    <Label
+      Text="Settings are stored in plain text. However, the value is not shown here."
+      VerticalOptions="Center"
+      TextColor="#FF0000"
+      HorizontalOptions="Center"/>
+    <Label
+      x:Name="AppDataDirectoryLabel"
+      Text="%DATA%"
+      VerticalOptions="Center"
+      HorizontalOptions="Center"/>
+    <Grid>
+      <Grid.RowDefinitions>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+        <RowDefinition Height="Auto"/>
+      </Grid.RowDefinitions>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="40*"/>
+        <ColumnDefinition Width="60*"/>
+      </Grid.ColumnDefinitions>
+      <Label
+        Grid.Row="0"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        Text="Unreal Location:"
+        VerticalOptions="Center"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End"/>
+      <HorizontalStackLayout Spacing="10"
+        Grid.Row="0" Grid.Column="1" Margin="0,5,0,5" VerticalOptions="FillAndExpand"  HorizontalOptions="FillAndExpand"
+      >
+        <Entry
+          x:Name="unrealPath"
+          VerticalOptions="Center"
+          WidthRequest="345"
+          HorizontalOptions="Start" />
+        <Button
+          Text="..."
+          Padding="10,0"
+          SemanticProperties.Hint="Find unreal directory"
+          Clicked="OnLookupUnreal"/>
+      </HorizontalStackLayout>
+      <Label
+        Grid.Row="1"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        Text="Service Uri:"
+        VerticalOptions="Center"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End"/>
+      <Entry
+        x:Name="serviceUri"
+        Grid.Row="1"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+      <Label
+        Grid.Row="2"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        Text="Api Key:"
+        VerticalOptions="Center"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End"/>
+      <Entry
+        x:Name="apiKey"
+        Grid.Row="2"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+      <Label
+        Grid.Row="3"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        Text="Secret:"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End"/>
+      <Entry
+        x:Name="secret"
+        Grid.Row="3"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+      <Label
+        Grid.Row="4"
+        Grid.Column="0"
+        Margin="0,5,15,5"
+        Text="Default Sync Folders:"
+        HorizontalTextAlignment="End"
+        HorizontalOptions="End"/>
+      <Entry
+        x:Name="defaultSyncFolders"
+        Grid.Row="4"
+        Grid.Column="1"
+        Margin="0,5,0,5"
+        VerticalOptions="Center"
+        WidthRequest="400"
+        HorizontalOptions="Start"/>
+    </Grid>
+  
+    <HorizontalStackLayout Padding="50, 50" HorizontalOptions="End" VerticalOptions="End">
+      <Button
+        Text="Canel"
+        Padding="20,0"
+        Margin="20,0"
+        SemanticProperties.Hint="Cancel Changes"
+        Clicked="OnCancel"/>
+      <Button
+        Text="Apply"
+        Padding="20,0"
+        SemanticProperties.Hint="Apply Changes"
+        Clicked="OnApply"/>
+    </HorizontalStackLayout>
+  </VerticalStackLayout>
+</ContentPage>
