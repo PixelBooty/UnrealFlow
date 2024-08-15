@@ -2,3 +2,5 @@
 .DS_Store
 /UnrealFlow/bin
 /UnrealFlow/obj
+/.vs
+UnrealFlow/UnrealFlow.csproj.user

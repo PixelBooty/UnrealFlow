@@ -3,23 +3,41 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              Shell.NavBarIsVisible="False"
              x:Class="UnrealFlow.MainPage">
-
-  <ScrollView>
-    <VerticalStackLayout Padding="30" Spacing="25">
-      <HorizontalStackLayout HorizontalOptions="End">
-        <Button
-          Text="Change Settings"
-          SemanticProperties.Hint="Change the settings for the cloud connection"
-          Clicked="OnChangeSettings"
-          Margin="20,0"/>
-        <Button
-          Text="Add Project"
-          SemanticProperties.Hint="Add an unreal project"
-          Clicked="OnAddProject"/>
-      </HorizontalStackLayout>
-      <HorizontalStackLayout>
-      </HorizontalStackLayout>
-    </VerticalStackLayout>
-  </ScrollView>
+  <VerticalStackLayout>
+    <HorizontalStackLayout HorizontalOptions="End" Margin="0,30,30,0" Spacing="20">
+      <Button
+        x:Name="changeSettings"
+        Text="Change Settings"
+        SemanticProperties.Hint="Change the settings for the cloud connection"
+        Clicked="OnChangeSettings"/>
+      <Button
+        x:Name="addProject"
+        Text="Add Project"
+        SemanticProperties.Hint="Add an unreal project"
+        Clicked="OnAddProject"/>
+      <Button
+        x:Name="editProject"
+        Text="Edit Project"
+        SemanticProperties.Hint="Edit selected unreal project"
+        IsEnabled="False"
+        Clicked="OnEditProject"/>
+    </HorizontalStackLayout>
+    <HorizontalStackLayout Margin="30,10,30,0" HeightRequest="390">
+      <VerticalStackLayout Padding="30,30,0,0" Spacing="25">
+        <Label Text="Selected Project" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+        <Label x:Name="selectedProject" Text="None" VerticalTextAlignment="Center" HorizontalTextAlignment="Center" />
+        <Button x:Name="buildButton" Text="Build Project" IsEnabled="False" Clicked="OnBuild" />
+        <Button x:Name="openButton" Text="Open Project" IsEnabled="False" Clicked="OnOpen" />
+        <Button x:Name="resetButton" Text="Reset VS Project Files" IsEnabled="False" Clicked="OnReset" />
+        <Button x:Name="syncButton" Text="Sync" IsEnabled="False" Clicked="OnSync" />
+      </VerticalStackLayout>
+      <Border Padding="100,0" BackgroundColor="Black" WidthRequest="1" Margin="75,0,25,0" />
+      <VerticalStackLayout x:Name="projectList" Padding="0,0" Spacing="10">
+      </VerticalStackLayout>
+    </HorizontalStackLayout>
+    <HorizontalStackLayout BackgroundColor="#017bad" Margin="0,0" Padding="20" HeightRequest="90">
+      <Label x:Name="status" Text="Status: Ready..." />
+    </HorizontalStackLayout>
+  </VerticalStackLayout>
 
 </ContentPage>

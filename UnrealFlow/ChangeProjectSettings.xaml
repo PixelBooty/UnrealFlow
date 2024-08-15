@@ -110,7 +110,7 @@
         WidthRequest="400"
         HorizontalOptions="Start"/>
     </Grid>
-    <HorizontalStackLayout Padding="50, 50" HorizontalOptions="End" VerticalOptions="End">
+    <HorizontalStackLayout Padding="50, 65" HorizontalOptions="End" VerticalOptions="End">
       <Button
         Text="Canel"
         Padding="20,0"
