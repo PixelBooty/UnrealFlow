@@ -38,7 +38,7 @@ namespace UnrealFlow{
 		}
 
 		public void OnApply( object sender, EventArgs e ){
-			if( this.id == "" ){
+			if( this.id == null ){
 				string newId = Guid.NewGuid().ToString();
 				AppSettings.instance.projects.Add( newId, new ProjectSettings(){
 					projectPath = this.projectPath.Text,
