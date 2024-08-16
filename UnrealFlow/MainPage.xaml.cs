@@ -175,7 +175,7 @@ namespace UnrealFlow{
 
       ProcessStartInfo startInfo = new ProcessStartInfo() {
         FileName = toolPath,
-        Arguments = projectPath,
+        Arguments = projectPath + ".uproject",
         WorkingDirectory = System.IO.Path.GetDirectoryName( projectPath ),
         UseShellExecute = true, // Important for opening a new window
         Verb = "OPEN",

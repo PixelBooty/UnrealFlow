@@ -123,7 +123,7 @@
     </Grid>
     <HorizontalStackLayout Padding="50, 25" AnchorY="1" HorizontalOptions="End" VerticalOptions="End">
       <Button
-        Text="Canel"
+        Text="Cancel"
         Padding="20,0"
         Margin="20,0"
         SemanticProperties.Hint="Cancel Changes"

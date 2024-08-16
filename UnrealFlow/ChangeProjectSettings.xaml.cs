@@ -6,7 +6,7 @@ namespace UnrealFlow{
 		public ChangeProjectSettings(){
 			InitializeComponent();
 			this.id = ChangeProjectSettings.passedId;
-			if( this.id == "" ){
+			if( this.id == null ){
 				this.nameHeader.Text = "Add Project";
 				this.syncPaths.Text = String.Join( ", ", AppSettings.instance.defaultSyncFolders );
 			}
