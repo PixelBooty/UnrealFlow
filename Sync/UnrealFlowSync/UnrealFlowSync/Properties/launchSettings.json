@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "UnrealFlowSync": {
+      "commandName": "Project",
+      "commandLineArgs": "-projectKey="
+    }
+  }
+}
