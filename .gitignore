@@ -78,3 +78,5 @@ AssetManager/pbprojectreset-sync-table.json
 /Sync/UnrealFlowSync/UnrealFlowSync/obj
 /Sync/UnrealFlowSync/UnrealFlowSync/bin
 .DS_Store
+/Content/Sync/*
+!/Content/Sync/dummy
