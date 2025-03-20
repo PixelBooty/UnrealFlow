@@ -10,7 +10,7 @@ public class UnrealFlow : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AWSSDK" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput" });
 
 		PrivateDependencyModuleNames.AddRange(new string[] {  });
 
@@ -22,16 +22,23 @@ public class UnrealFlow : ModuleRules
 		
 
 		// To include OnlineSubsystemSteam, add it to the plugins section in your uproject file with the Enabled attribute set to true
-
+		
 		// Define the source and destination paths
         string SourceDir = Path.Combine(ModuleDirectory, "..", "..", "Sync", "UnrealFlowSync", "UnrealFlowSync", "bin", "Release", "net8.0");
         string DestDir = Path.Combine("$(ProjectDir)", "Content", "Sync");
 
         // Add the executable and DLLs
 
-		( new[] { "UnrealFlowSync.exe", "UnrealFlowSync.dll", "UnrealFlowSync.deps.json", "Newtonsoft.Json.dll", "AWSSDK.S3.dll", "AWSSDK.Core.dll", "UnrealFlowSync.pdb", "UnrealFlowSync.runtimeconfig.json" } ).ToList().ForEach( fileName => {
-			RuntimeDependencies.Add(Path.Combine(DestDir, fileName), Path.Combine(SourceDir, fileName));
-		} );
+    if (Target.Platform == UnrealTargetPlatform.Win64){
+	    ( new[] { "UnrealFlowSync.exe", "UnrealFlowSync.dll", "UnrealFlowSync.deps.json", "Newtonsoft.Json.dll", "AWSSDK.S3.dll", "AWSSDK.Core.dll", "UnrealFlowSync.pdb", "UnrealFlowSync.runtimeconfig.json" } ).ToList().ForEach( fileName => {
+		    RuntimeDependencies.Add(Path.Combine(DestDir, fileName), Path.Combine(SourceDir, fileName));
+	    } );
+    }
+    else if (Target.Platform == UnrealTargetPlatform.Mac){
+	    ( new[] { "UnrealFlowSync", "UnrealFlowSync.dll", "UnrealFlowSync.deps.json", "Newtonsoft.Json.dll", "AWSSDK.S3.dll", "AWSSDK.Core.dll", "UnrealFlowSync.pdb", "UnrealFlowSync.runtimeconfig.json" } ).ToList().ForEach( fileName => {
+		    RuntimeDependencies.Add(Path.Combine(DestDir, fileName), Path.Combine(SourceDir, fileName));
+	    } );
+    }
 		
 		bEnableUndefinedIdentifierWarnings = false;
 	}

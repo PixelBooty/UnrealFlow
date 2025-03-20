@@ -301,7 +301,7 @@ double UEasings::EaseInElastic( double start, double end, double value ){
   }
 
   return -(
-    end * FMath::Pow( 2, 10 * ( value -= 1 ) ) * FMath::Sin( ( ( value * 1 ) - .075 ) * ( 2 * UEasings::Pi ) / .3 )
+    end * FMath::Pow( 2, 10 * ( value - 1 ) ) * FMath::Sin( ( ( value * 1 ) - .075 ) * ( 2 * UEasings::Pi ) / .3 )
   ) + start;
 }
 
@@ -335,10 +335,10 @@ double UEasings::EaseInOutElastic( double start, double end, double value ){
   return value < 1
     ? (
       -.5 * (
-        end * FMath::Pow( 2, 10 * ( value -= 1 ) ) * FMath::Sin( ( ( value * 1 ) - .075 ) * ( 2 * UEasings::Pi ) / .3 )
+        end * FMath::Pow( 2, 10 * ( value - 1 ) ) * FMath::Sin( ( ( value * 1 ) - .075 ) * ( 2 * UEasings::Pi ) / .3 )
       )
     ) + start
     : (
-      end * FMath::Pow( 2, -10 * ( value -= 1 ) ) * FMath::Sin( ( ( value * 1 ) - .075 ) * ( 2 * UEasings::Pi ) / .3 ) * .5
+      end * FMath::Pow( 2, -10 * ( value - 1 ) ) * FMath::Sin( ( ( value * 1 ) - .075 ) * ( 2 * UEasings::Pi ) / .3 ) * .5
     ) + end + start;
 }
