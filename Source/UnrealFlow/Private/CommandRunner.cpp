@@ -145,8 +145,9 @@ void ACommandRunner::OpenFile( FString program, FString filePath ){
     SW_SHOWNORMAL
   );
 #elif PLATFORM_MAC
-  FString Command = FString::Printf(TEXT("open -a \"%s\" \"%s\" &"), *program, *filePath );
-  system( TCHAR_TO_UTF8( *Command ) );
+  //FString Command = FString::Printf(TEXT("open -a \"%s\" \"%s\" &"), *program, *filePath );
+  //int result = system( TCHAR_TO_UTF8( *Command ) );
+  //UE_LOG( LogTemp, Error, TEXT( "%i" ), result );
 #elif PLATFORM_LINUX
   FString Command = FString::Printf(TEXT("%s \"%s\" &"), *program, *filePath );
   system( TCHAR_TO_UTF8( *Command ) );
