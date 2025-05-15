@@ -8,12 +8,17 @@
 #include <shellapi.h>
 #else
 #include <cstdlib>
+#include <unistd.h>
+#include <fcntl.h>
+#include <sys/wait.h>
+#include <errno.h>
 #endif
 
 ACommandRunner* ACommandRunner::_instance = nullptr;
 
 ACommandRunner::ACommandRunner(){
-  PrimaryActorTick.bCanEverTick = true;
+  PrimaryActorTick.bCanEverTick = true;////Users/Shared/Epic Games/UE_5.5/Engine/Build/BatchFiles/Mac/../../../Binaries/ThirdParty/DotNet/8.0.300/mac-arm64
+                                       /// dotnet Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.dll
   this->wasRunning = false;
 }
 
@@ -78,6 +83,12 @@ bool ACommandRunner::IsRunning(){
   }
   return false;
 #else
+  if (this->_pipe) {
+    // Check if pipe is still open and not at EOF
+    if (!feof(this->_pipe) && !ferror(this->_pipe)) {
+      return true; // Assume process is running
+    }
+  }
   return false;
 #endif
 }
@@ -111,7 +122,18 @@ bool ACommandRunner::Start( FString command ){
   this->wasRunning = true;
   return true;
 #else
-  return false;
+  UE_LOG( LogTemp, Error, TEXT("command::`%s`"), *command );
+  std::string cmd = TCHAR_TO_UTF8(*command);
+
+  // Open pipe and execute command
+  this->_pipe = popen(cmd.c_str(), "r");
+  if (!this->_pipe) {
+    UE_LOG(LogTemp, Error, TEXT("Failed to execute command: %s"), *command);
+    return false;
+  }
+
+  this->wasRunning = true;
+  return true;
 #endif
 }
 
@@ -129,7 +151,10 @@ void ACommandRunner::Stop(){
     this->_readPipe = nullptr;
   }
 #else
-  
+  if( this->_pipe ){
+    pclose( this->_pipe );
+    this->_pipe = nullptr;
+  }
 #endif
   this->wasRunning = false;
 }
@@ -144,13 +169,9 @@ void ACommandRunner::OpenFile( FString program, FString filePath ){
     nullptr,
     SW_SHOWNORMAL
   );
-#elif PLATFORM_MAC
-  //FString Command = FString::Printf(TEXT("open -a \"%s\" \"%s\" &"), *program, *filePath );
-  //int result = system( TCHAR_TO_UTF8( *Command ) );
-  //UE_LOG( LogTemp, Error, TEXT( "%i" ), result );
-#elif PLATFORM_LINUX
-  FString Command = FString::Printf(TEXT("%s \"%s\" &"), *program, *filePath );
-  system( TCHAR_TO_UTF8( *Command ) );
+#else
+  FString Command = FString::Printf(TEXT("\"%s\" \"%s\" &"), *program, *filePath );
+  int result = system( TCHAR_TO_UTF8( *Command ) );
 #endif
 }
 
@@ -169,6 +190,14 @@ void ACommandRunner::_ReadOutput(){
     }
   }
 #else
+  char buffer[4096];
+  if (fgets(buffer, sizeof(buffer), _pipe) != nullptr) {
+    FString output = FString(UTF8_TO_TCHAR(buffer));
+    if( this->_onCommandOutput.IsBound()){
+      this->_onCommandOutput.Execute(output);
+    }
+  }
+
 #endif
 }
 

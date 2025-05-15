@@ -74,8 +74,7 @@ private:
   HANDLE _writePipe = nullptr;
   PROCESS_INFORMATION _processInfo = { 0 };
 #else
-  pid_t _processId = -1;
-  int _pipeFileDevice[2] = { -1, -1 }; // 0 = read, 1 = write
+  FILE* _pipe;
 #endif
   
 };
