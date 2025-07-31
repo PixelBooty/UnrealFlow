@@ -25,8 +25,11 @@ void ATweenManager::Destroyed(){
 
 void ATweenManager::Tick( float DeltaTime ){
   Super::Tick( DeltaTime );
+
+  int tweenerToRemove = -1;
   
-  for( FTweener& tweener : this->_tweeners ){
+  for( int i = 0; i < this->_tweeners.Num(); i++ ){
+    FTweener& tweener = this->_tweeners[i];
     tweener.currentTime += DeltaTime;
     float distance = FMath::Clamp( tweener.currentTime / tweener.totalTime, 0, 1 );
     if( distance < 1 ){
@@ -41,9 +44,14 @@ void ATweenManager::Tick( float DeltaTime ){
       }
       if( tweener.onFinished.IsBound() ){
         tweener.onFinished.Execute();
+        tweenerToRemove = i;
       }
     }
     
+  }
+
+  if( tweenerToRemove != -1 ){
+    this->_tweeners.RemoveAt( tweenerToRemove );
   }
 }
 

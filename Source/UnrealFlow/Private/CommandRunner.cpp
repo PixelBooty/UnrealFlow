@@ -17,8 +17,7 @@
 ACommandRunner* ACommandRunner::_instance = nullptr;
 
 ACommandRunner::ACommandRunner(){
-  PrimaryActorTick.bCanEverTick = true;////Users/Shared/Epic Games/UE_5.5/Engine/Build/BatchFiles/Mac/../../../Binaries/ThirdParty/DotNet/8.0.300/mac-arm64
-                                       /// dotnet Engine/Binaries/DotNET/UnrealBuildTool/UnrealBuildTool.dll
+  PrimaryActorTick.bCanEverTick = true;
   this->wasRunning = false;
 }
 
@@ -90,6 +89,64 @@ bool ACommandRunner::IsRunning(){
     }
   }
   return false;
+#endif
+}
+
+void ACommandRunner::ExecuteCommandInWindow( FString command ){
+#if PLATFORM_WINDOWS
+  FString fullCommand = FString::Printf(TEXT("cmd.exe /c \"%s\""), *command);
+
+  STARTUPINFOW startupInfo = { sizeof( startupInfo ) };
+  startupInfo.dwFlags = STARTF_USESHOWWINDOW;
+  startupInfo.wShowWindow = SW_SHOWNORMAL; // Show the console window
+
+  PROCESS_INFORMATION processInfo = {};
+  std::wstring cmd = std::wstring( TCHAR_TO_WCHAR(*fullCommand ) );
+
+  UE_LOG( LogTemp, Warning, TEXT("Executing command in window: %s"), *fullCommand );
+
+  if( !CreateProcessW( nullptr, &cmd[0], nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startupInfo, &processInfo ) ){
+    UE_LOG( LogTemp, Error, TEXT("Failed to execute command in window: %s"), *command );
+    return;
+  }
+
+  // Close handles immediately since we're not tracking this process
+  CloseHandle( processInfo.hProcess );
+  CloseHandle( processInfo.hThread );
+
+#elif PLATFORM_LINUX
+  // Use gnome-terminal, xterm, or konsole depending on what's available
+  FString terminalCommand = FString::Printf(TEXT("gnome-terminal -- bash -c \"%s; echo 'Press Enter to close...'; read\""), *command);
+
+  UE_LOG( LogTemp, Warning, TEXT("Executing command in terminal: %s"), *terminalCommand );
+
+  int result = system( TCHAR_TO_UTF8( *terminalCommand ) );
+  if( result == -1 ){
+    // Try xterm as fallback
+    terminalCommand = FString::Printf(TEXT("xterm -e 'bash -c \"%s; echo Press Enter to close...; read\"'"), *command);
+    result = system( TCHAR_TO_UTF8( *terminalCommand ) );
+
+    if( result == -1 ){
+      // Try konsole as second fallback
+      terminalCommand = FString::Printf(TEXT("konsole -e bash -c \"%s; echo 'Press Enter to close...'; read\""), *command);
+      result = system( TCHAR_TO_UTF8( *terminalCommand ) );
+
+      if( result == -1 ){
+        UE_LOG( LogTemp, Error, TEXT("Failed to execute command in terminal: %s"), *command );
+      }
+    }
+  }
+
+#elif PLATFORM_MAC
+  // Use Terminal.app on macOS
+  FString terminalCommand = FString::Printf(TEXT("osascript -e 'tell application \"Terminal\" to do script \"%s\"'"), *command);
+
+  UE_LOG( LogTemp, Warning, TEXT("Executing command in Terminal: %s"), *terminalCommand );
+
+  int result = system( TCHAR_TO_UTF8( *terminalCommand ) );
+  if( result == -1 ){
+    UE_LOG( LogTemp, Error, TEXT("Failed to execute command in Terminal: %s"), *command );
+  }
 #endif
 }
 

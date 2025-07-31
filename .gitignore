@@ -24,6 +24,7 @@
 *.xcodeproj
 *.xcworkspace
 *.sln
+!Sync/UnrealFlowSync/*.sln
 *.suo
 *.opensdf
 *.sdf
@@ -80,3 +81,7 @@ AssetManager/pbprojectreset-sync-table.json
 .DS_Store
 /Content/Sync/*
 !/Content/Sync/dummy
+/Content/Exec/*
+!/Content/Exec/dummy
+/Exec/UnrealFlowExec/UnrealFlowExec/bin
+/Exec/UnrealFlowExec/UnrealFlowExec/obj

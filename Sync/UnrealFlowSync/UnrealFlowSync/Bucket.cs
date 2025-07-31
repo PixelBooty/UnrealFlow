@@ -8,7 +8,10 @@ namespace UnrealFlow {
     public string name;
 
     public Amazon.S3.AmazonS3Client client => new Amazon.S3.AmazonS3Client( this.apiKey, this.secret, new Amazon.S3.AmazonS3Config() {
-      ServiceURL = AppSettings.instance.serviceUri
+      ServiceURL = AppSettings.instance.serviceUri,
+      //LogResponse = true,
+      //LogMetrics = true,
+      ForcePathStyle = true
     } );
 
   }

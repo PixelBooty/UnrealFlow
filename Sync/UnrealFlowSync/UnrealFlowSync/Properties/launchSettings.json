@@ -2,7 +2,7 @@
   "profiles": {
     "UnrealFlowSync": {
       "commandName": "Project",
-      "commandLineArgs": "-projectKey="
+      "commandLineArgs": "-key=FF030FD94527E4FF45519AB2CD63B690 -settingsPath=\u0022C:/Users/daKul/Documents//UnrealFlow/settings.json\u0022"
     }
   }
 }

@@ -42,23 +42,28 @@ namespace UnrealFlow {
               if( projectData.ContainsKey( nameof( ProjectSettings.syncName ) ) ) {
                 project.syncName = (string)projectData[nameof( ProjectSettings.syncName )];
               }
-              if( projectData.ContainsKey( nameof( ProjectSettings.versionsToKeep ) ) ) {
-                project.versionsToKeep = (int)projectData[nameof( ProjectSettings.versionsToKeep )];
-              }
-              if( projectData.ContainsKey( nameof( ProjectSettings.syncPaths ) ) ) {
-                JArray syncFoldersArray = (JArray)projectData[nameof( ProjectSettings.syncPaths )];
-                foreach( JToken syncFolder in syncFoldersArray ) {
-                  project.syncPaths.Add( (string)syncFolder );
-                }
+              if( projectData.ContainsKey( nameof( ProjectSettings.projectSyncFolder ) ) ) {
+                project.projectSyncFolder = (string)projectData[nameof( ProjectSettings.projectSyncFolder )];
               }
               this.projects.Add( projectKvp.Key, project );
             }
           }
-          if( settingsObject.ContainsKey( nameof( this.defaultSyncFolders ) ) ) {
-            this.defaultSyncFolders.Clear();
-            JArray defaultSyncFoldersArray = (JArray)settingsObject[nameof( this.defaultSyncFolders )];
-            foreach( JToken defaultSyncFolder in defaultSyncFoldersArray ) {
-              this.defaultSyncFolders.Add( (string)defaultSyncFolder );
+          if( settingsObject.ContainsKey( nameof( this.folders ) ) ) {
+            this.folders.Clear();
+            JObject folderObject = (JObject)settingsObject[nameof( this.folders )];
+            foreach( KeyValuePair<string, JToken> folderKvp in folderObject ) {
+              JObject folderData = folderKvp.Value as JObject;
+              FolderSettings folder = new FolderSettings();
+              if( folderData.ContainsKey( nameof( FolderSettings.displayName ) ) ) {
+                folder.displayName = (string)folderData[nameof( FolderSettings.displayName )];
+              }
+              if( folderData.ContainsKey( nameof( FolderSettings.syncName ) ) ) {
+                folder.syncName = (string)folderData[nameof( FolderSettings.syncName )];
+              }
+              if( folderData.ContainsKey( nameof( FolderSettings.folderPath ) ) ) {
+                folder.folderPath = (string)folderData[nameof( FolderSettings.folderPath )];
+              }
+              this.folders.Add( folderKvp.Key, folder );
             }
           }
         }
@@ -85,26 +90,25 @@ namespace UnrealFlow {
       baseObject[nameof( this.apiKey )] = this.apiKey;
       baseObject[nameof( this.secret )] = this.secret;
       baseObject[nameof( this.unrealPath )] = this.unrealPath;
-      JArray baseDefaultFoldersArray = new JArray();
-      foreach( string defaultSyncFolder in this.defaultSyncFolders ) {
-        baseDefaultFoldersArray.Add( defaultSyncFolder );
-      }
-      baseObject[nameof( this.defaultSyncFolders )] = baseDefaultFoldersArray;
       JObject baseProjects = new JObject();
       foreach( KeyValuePair<string, ProjectSettings> project in this.projects ) {
         JObject projectData = new JObject();
         projectData[nameof( ProjectSettings.displayName )] = project.Value.displayName;
         projectData[nameof( ProjectSettings.projectPath )] = project.Value.projectPath;
         projectData[nameof( ProjectSettings.syncName )] = project.Value.syncName;
-        projectData[nameof( ProjectSettings.versionsToKeep )] = project.Value.versionsToKeep;
-        JArray foldersArray = new JArray();
-        foreach( string syncFolder in project.Value.syncPaths ) {
-          foldersArray.Add( syncFolder );
-        }
-        projectData[nameof( ProjectSettings.syncPaths )] = foldersArray;
+        projectData[nameof( ProjectSettings.projectSyncFolder )] = project.Value.projectSyncFolder;
         baseProjects.Add( project.Key, projectData );
       }
+      JObject baseFolders = new JObject();
+      foreach( KeyValuePair<string, FolderSettings> folder in this.folders ) {
+        JObject folderData = new JObject();
+        folderData[nameof( FolderSettings.displayName )] = folder.Value.displayName;
+        folderData[nameof( FolderSettings.syncName )] = folder.Value.syncName;
+        folderData[nameof( FolderSettings.folderPath )] = folder.Value.folderPath;
+        baseFolders.Add( folder.Key, folderData );
+      }
       baseObject[nameof( this.projects )] = baseProjects;
+      baseObject[nameof( this.folders )] = baseFolders;
       return baseObject.ToString();
     }
 
@@ -112,9 +116,9 @@ namespace UnrealFlow {
     public string apiKey = "";
     public string secret = "";
     public string unrealPath = "";
-    public List<string> defaultSyncFolders = new List<string>();
 
     public Dictionary<string, ProjectSettings> projects = new Dictionary<string, ProjectSettings>();
+    public Dictionary<string, FolderSettings> folders = new Dictionary<string, FolderSettings>();
 
     private static AppSettings _instance = null;
   }
@@ -122,7 +126,11 @@ namespace UnrealFlow {
   static class DateExtentions {
 
     public static long ToUnixSeconds( this DateTime dateTime ) {
-      return ( (DateTimeOffset)dateTime ).ToUnixTimeSeconds();
+      DateTime utcDateTime = dateTime.Kind == DateTimeKind.Unspecified
+        ? DateTime.SpecifyKind( dateTime, DateTimeKind.Utc )
+        : dateTime.ToUniversalTime();
+
+      return ( (DateTimeOffset)utcDateTime ).ToUnixTimeSeconds();
     }
   }
 };

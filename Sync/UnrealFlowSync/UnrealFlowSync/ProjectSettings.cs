@@ -3,9 +3,8 @@
   public class ProjectSettings {
     public string displayName = "";
     public string syncName = "";
-    public int versionsToKeep = 0;
     public string projectPath = "";
-    public List<string> syncPaths = new List<string>();
+    public string projectSyncFolder = "";
 
     public Bucket bucket => new Bucket() {
       apiKey = AppSettings.instance.apiKey,

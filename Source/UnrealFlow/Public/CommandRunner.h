@@ -47,6 +47,9 @@ public:
   UFUNCTION(BlueprintCallable)
   void ExecuteCommand( FString command, FOnCommandOutput outputEvent, FOnCommandCompleted completed );
 
+  UFUNCTION(BlueprintCallable)
+  void ExecuteCommandInWindow( FString command );
+
   UPROPERTY(BlueprintReadOnly)
   ESystemType systemType;
 

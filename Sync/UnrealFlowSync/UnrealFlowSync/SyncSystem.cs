@@ -10,9 +10,6 @@ using Amazon.S3.Model;
 namespace UnrealFlow {
 
   class SyncSystem {
-
-    private string _projectDirectory;
-
     private void _UpdateStatus( string status ) {
       Console.WriteLine( status );
       this._SetRetry( 0 );
@@ -22,7 +19,7 @@ namespace UnrealFlow {
       !info.Name.StartsWith( "." ) && !info.Name.StartsWith( "_" );
 
     private bool _ValidDirectoryName( DirectoryInfo info ) =>
-      !info.Name.StartsWith( "." ) && !info.Name.StartsWith( "_" );
+      !info.Name.StartsWith( "." ) && ( !info.Name.StartsWith( "_" ) || info.Name == "__scripts" );
 
     private IEnumerable<FileInfo> _GetBucketLocalFiles( string path ) {
       List<FileInfo> files = new List<FileInfo>();
@@ -132,83 +129,80 @@ namespace UnrealFlow {
       //this._statusLabel.Text = "Retry: " + count;
     }
 
-    public async Task SyncBucket( ProjectSettings projectSettings ) {
-      this._projectDirectory = projectSettings.projectPath.Replace( "\\", "/" );
-      Bucket bucket = projectSettings.bucket;
-      this._UpdateStatus( "Sync Started:\nGetting bucket file tree" );
-      string[] paths = projectSettings.syncPaths.ToArray();
-      //new string[] { "ImportsLarge", "Content/AssetsLarge", "Content/Megascans", "CarnalAssets" };
+    private async Task LocalFiles(
+      string folderPath,
+      List<string> localFilePaths,
+      List<string> updateList,
+      SyncTable syncTable,
+      Bucket bucket,
+      IEnumerable<S3Object> bucketList
+    ) {
+      IEnumerable<FileInfo> localFiles = this._GetBucketLocalFiles( folderPath );
+      this._UpdateStatus( $"Checking:\n{folderPath}" );
+      foreach( FileInfo localFile in localFiles ) {
 
-      IEnumerable<S3Object> bucketList = await this._GetBucketFileList( bucket.name, bucket.client );
-      SyncTable syncTable = SyncTable.GetSyncTable( bucket.name );
+        string filePath = localFile.FullName.Replace( "\\", "/" ).Replace( folderPath + "/", "" );
+        localFilePaths.Add( filePath );
 
-      List<string> localFilePaths = new List<string>();
-      List<string> updateList = new List<string>();
-      List<string> deleteList = new List<string>();
-
-      foreach( string path in paths ) {
-        string folderPath = Path.Combine( this._projectDirectory, path );
-        IEnumerable<FileInfo> localFiles = this._GetBucketLocalFiles( folderPath );
-        foreach( FileInfo localFile in localFiles ) {
-          this._UpdateStatus( $"Checking:\n{path}" );
-
-          string filePath = localFile.FullName.Replace( "\\", "/" ).Replace( this._projectDirectory + "/", "" );
-          localFilePaths.Add( filePath );
-
-          if( !bucketList.Any( x => x.Key == filePath ) && syncTable.HasFile( filePath ) ) {
-            syncTable.RemoveFile( filePath );
-            File.Delete( localFile.FullName );
-            syncTable.Save();
-          }
-          else {
-            if( !syncTable.HasFile( filePath ) ) {
-              //Newly created file//
-              this._UpdateStatus( "Uploading New File:\n" + this._TrunkFileName( filePath ) );
-              await this._ExecuteRequest( async () => await bucket.client.PutObjectAsync( new PutObjectRequest() {
-                BucketName = bucket.name,
-                FilePath = localFile.FullName,
-                Key = filePath,
-              } ), 10 );
-              DateTime modTime = (
-                await this._ExecuteRequest(
-                  async () => await bucket.client.GetObjectMetadataAsync(
-                    new GetObjectMetadataRequest() {
-                      BucketName = bucket.name,
-                      Key = filePath,
-                    } ), 50
-                  )
-              ).LastModified.ToUniversalTime();
-              syncTable.SetModTime( filePath, modTime.ToUnixSeconds() );
-              File.SetLastWriteTimeUtc( localFile.FullName, modTime );
-              syncTable.Save();
-            }
-            else if( syncTable.ModTime( filePath ) != localFile.LastWriteTimeUtc.ToUnixSeconds() ) {
-              this._UpdateStatus( "Uploading File Update:\n" + this._TrunkFileName( filePath ) );
-              await this._ExecuteRequest( async () => await bucket.client.PutObjectAsync( new PutObjectRequest() {
-                BucketName = bucket.name,
-                FilePath = localFile.FullName,
-                Key = filePath
-              } ), 30 );
-              DateTime modTime = (
-                await this._ExecuteRequest(
-                  async () => await bucket.client.GetObjectMetadataAsync( new GetObjectMetadataRequest() {
+        if( !bucketList.Any( x => x.Key == filePath ) && syncTable.HasFile( filePath ) ) {
+          syncTable.RemoveFile( filePath );
+          File.Delete( localFile.FullName );
+          syncTable.Save();
+        }
+        else {
+          if( !syncTable.HasFile( filePath ) ) {
+            //Newly created file//
+            this._UpdateStatus( "Uploading New File: \n" + this._TrunkFileName( filePath ) + "\n" + filePath );
+            await this._ExecuteRequest( async () => await bucket.client.PutObjectAsync( new PutObjectRequest() {
+              BucketName = bucket.name,
+              FilePath = localFile.FullName,
+              Key = filePath,
+            } ), 10 );
+            DateTime modTime = (
+              await this._ExecuteRequest(
+                async () => await bucket.client.GetObjectMetadataAsync(
+                  new GetObjectMetadataRequest() {
                     BucketName = bucket.name,
                     Key = filePath,
                   } ), 50
                 )
-              ).LastModified.ToUniversalTime();
+            ).LastModified.ToUniversalTime();
+            syncTable.SetModTime( filePath, modTime.ToUnixSeconds() );
+            File.SetLastWriteTimeUtc( localFile.FullName, modTime );
+            syncTable.Save();
+          }
+          else if( Math.Abs( syncTable.ModTime( filePath ) - localFile.LastWriteTimeUtc.ToUnixSeconds() ) > 15 ) {
+            this._UpdateStatus( "Uploading File Update:\n" + this._TrunkFileName( filePath ) );
+            this._UpdateStatus( "File sync time " + syncTable.ModTime( filePath ) + " last write " + localFile.LastWriteTimeUtc.ToUnixSeconds() );
+            await this._ExecuteRequest( async () => await bucket.client.PutObjectAsync( new PutObjectRequest() {
+              BucketName = bucket.name,
+              FilePath = localFile.FullName,
+              Key = filePath
+            } ), 30 );
+            DateTime modTime = (
+              await this._ExecuteRequest(
+                async () => await bucket.client.GetObjectMetadataAsync( new GetObjectMetadataRequest() {
+                  BucketName = bucket.name,
+                  Key = filePath,
+                } ), 50
+              )
+            ).LastModified.ToUniversalTime();
 
-              syncTable.SetModTime( filePath, modTime.ToUnixSeconds() );
-              File.SetLastWriteTimeUtc( localFile.FullName, modTime );
-              updateList.Add( filePath );
-              syncTable.Save();
-            }
+            syncTable.SetModTime( filePath, modTime.ToUnixSeconds() );
+            File.SetLastWriteTimeUtc( localFile.FullName, modTime );
+            updateList.Add( filePath );
+            syncTable.Save();
           }
         }
       }
+    }
 
-      this._UpdateStatus( "Validating Removed Files" );
-
+    private async Task _Deletes(
+      List<string> localFilePaths,
+      List<string> deleteList,
+      SyncTable syncTable,
+      Bucket bucket
+    ) {
       foreach( string filePath in syncTable.GetPathList() ) {
         if( !localFilePaths.Contains( filePath ) ) {
           await this._ExecuteRequest( async () => await bucket.client.DeleteObjectAsync( new DeleteObjectRequest() {
@@ -220,50 +214,141 @@ namespace UnrealFlow {
           syncTable.Save();
         }
       }
+    }
+
+  private async Task _Downloads(
+    string folderPath,
+    List<string> localFilePaths,
+    List<string> updateList,
+    List<string> deleteList,
+    SyncTable syncTable,
+    Bucket bucket,
+    IEnumerable<S3Object> bucketList
+  ) {
+      // Semaphore to limit concurrent downloads to 10
+      using( var semaphore = new SemaphoreSlim( 10, 10 ) ) {
+        var downloadTasks = new List<Task>();
+
+        foreach( S3Object bucketFile in bucketList ) {
+          // Capture the bucketFile in a local variable for the async closure
+          var file = bucketFile;
+
+          var downloadTask = Task.Run( async () =>
+          {
+            // Wait for an available slot
+            await semaphore.WaitAsync();
+
+            try {
+              string filePath = file.Key;
+              DateTime convertedBucketTime = file.LastModified;
+              long fileModTime = syncTable.ModTime( filePath );
+
+              if( !deleteList.Contains( filePath )
+                && (
+                  !syncTable.HasFile( filePath )
+                  || ( fileModTime != convertedBucketTime.ToUnixSeconds() && !updateList.Contains( filePath ) )
+                )
+              ) {
+                string absoluteFilePath = Path.Combine( folderPath, filePath );
+
+                if( filePath.EndsWith( "/" ) ) {
+                  Directory.CreateDirectory( ( new FileInfo( absoluteFilePath ) ).Directory.FullName );
+                }
+                else {
+                  this._UpdateStatus( "Downloading:\n" + this._TrunkFileName( filePath ) );
+                  long syncTimeHere = syncTable.ModTime( filePath );
+                  long bucketFileTime = file.LastModified.ToUnixSeconds();
+
+                  GetObjectResponse response = await this._ExecuteRequest(
+                    async () => await bucket.client.GetObjectAsync(
+                      new GetObjectRequest() {
+                        BucketName = bucket.name,
+                        Key = file.Key,
+                      }
+                    ), 3
+                  );
+
+                  Directory.CreateDirectory( ( new FileInfo( absoluteFilePath ) ).Directory.FullName );
+
+                  using( Stream inputStream = response.ResponseStream )
+                  using( FileStream fileStream = new FileStream( absoluteFilePath, FileMode.Create ) ) {
+                    await inputStream.CopyToAsync( fileStream );
+                  }
+
+                  // Use a lock to ensure thread-safe operations on syncTable
+                  lock( syncTable ) {
+                    syncTable.SetModTime( filePath, convertedBucketTime.ToUnixSeconds() );
+                    syncTable.Save();
+                  }
+
+                  File.SetLastWriteTimeUtc( absoluteFilePath, convertedBucketTime );
+                }
+              }
+            }
+            finally {
+              // Release the semaphore slot
+              semaphore.Release();
+            }
+          } );
+
+          downloadTasks.Add( downloadTask );
+        }
+
+        // Wait for all downloads to complete
+        await Task.WhenAll( downloadTasks );
+      }
+    }
+
+    public async Task SyncFolder( FolderSettings folderSettings ) {
+      string syncPath = folderSettings.folderPath.Replace( "\\", "/" );
+      Bucket bucket = folderSettings.bucket;
+      this._UpdateStatus( "Sync Started:\nGetting bucket file tree for '" + AppSettings.instance.serviceUri + "'" );
+      IEnumerable<S3Object> bucketList = await this._GetBucketFileList( bucket.name, bucket.client );
+      SyncTable syncTable = SyncTable.GetSyncTable( bucket.name );
+
+      List<string> localFilePaths = new List<string>();
+      List<string> updateList = new List<string>();
+      List<string> deleteList = new List<string>();
+
+      await this.LocalFiles( syncPath, localFilePaths, updateList, syncTable, bucket, bucketList );
+
+      this._UpdateStatus( "Validating Removed Files" );
+
+      await this._Deletes( localFilePaths, deleteList, syncTable, bucket );
 
       this._UpdateStatus( "Validating Bucket Files" );
 
-      foreach( S3Object bucketFile in bucketList ) {
-        string filePath = bucketFile.Key;
-        DateTime convertedBucketTime = bucketFile.LastModified;
-        long fileModTime = syncTable.ModTime( filePath );
-        if( !deleteList.Contains( filePath )
-          && (
-            !syncTable.HasFile( filePath )
-            || ( fileModTime != convertedBucketTime.ToUnixSeconds() && !updateList.Contains( filePath ) )
-          )
-        ) {
-          string absoluteFilePath = Path.Combine( this._projectDirectory, filePath );
-          if( filePath.EndsWith( "/" ) ) {
-            Directory.CreateDirectory( ( new FileInfo( absoluteFilePath ) ).Directory.FullName );
-          }
-          else {
-            this._UpdateStatus( "Downloading:\n" + this._TrunkFileName( filePath ) );
-            long syncTimeHere = syncTable.ModTime( filePath );
-            long bucketFileTime = bucketFile.LastModified.ToUnixSeconds();
+      await this._Downloads( syncPath, localFilePaths, updateList, deleteList, syncTable, bucket, bucketList );
 
-            GetObjectResponse response = await this._ExecuteRequest(
-              async () => await bucket.client.GetObjectAsync(
-                new GetObjectRequest() {
-                  BucketName = bucket.name,
-                  Key = bucketFile.Key,
-                }
-              ), 3
-            );
-            Directory.CreateDirectory( ( new FileInfo( absoluteFilePath ) ).Directory.FullName );
+      this._UpdateStatus( "Standby" );
 
-            using( Stream inputStream = response.ResponseStream )
-            using( FileStream fileStream = new FileStream( absoluteFilePath, FileMode.Create ) ) {
-              inputStream.CopyTo( fileStream );
-            }
+    }
 
-            syncTable.SetModTime( filePath, convertedBucketTime.ToUnixSeconds() );
-            File.SetLastWriteTimeUtc( absoluteFilePath, convertedBucketTime );
-            syncTable.Save();
-          }
+    public async Task SyncBucket( ProjectSettings projectSettings ) {
+      Bucket bucket = projectSettings.bucket;
+      this._UpdateStatus( "Sync Started:\nGetting bucket file tree for '" + AppSettings.instance.serviceUri + "'" );
+      string path = projectSettings.projectSyncFolder;
+      //new string[] { "ImportsLarge", "Content/AssetsLarge", "Content/Megascans", "CarnalAssets" };
 
-        }
-      }
+      IEnumerable<S3Object> bucketList = await this._GetBucketFileList( bucket.name, bucket.client );
+      SyncTable syncTable = SyncTable.GetSyncTable( bucket.name );
+
+      List<string> localFilePaths = new List<string>();
+      List<string> updateList = new List<string>();
+      List<string> deleteList = new List<string>();
+
+      string folderPath = Path.Combine( projectSettings.projectPath.Replace( "\\", "/" ), path ).Replace( "\\", "/" );
+
+      await this.LocalFiles( folderPath, localFilePaths, updateList, syncTable, bucket, bucketList );
+
+      this._UpdateStatus( "Validating Removed Files" );
+
+
+      await this._Deletes( localFilePaths, deleteList, syncTable, bucket );
+
+      this._UpdateStatus( "Validating Bucket Files" );
+
+      await this._Downloads( folderPath, localFilePaths, updateList, deleteList, syncTable, bucket, bucketList );
 
       this._UpdateStatus( "Standby" );
     }
