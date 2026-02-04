@@ -4,22 +4,51 @@ using System.IO;
 using System.Linq;
 using System.Net.Sockets;
 using System.Reflection.Emit;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Amazon.S3.Model;
+using Newtonsoft.Json.Linq;
 
 namespace UnrealFlow {
 
   class SyncSystem {
+
+    private JObject localSyncConfig = null;
+
     private void _UpdateStatus( string status ) {
       Console.WriteLine( status );
       this._SetRetry( 0 );
     }
 
+    private bool _IgnoreFilePatternsTests( string fileName ) {
+      if( this.localSyncConfig != null && this.localSyncConfig.ContainsKey( "ignore-files" ) ) {
+        foreach( string pattern in this.localSyncConfig["ignore-files"] as JArray ) {
+          if( ( new Regex( pattern ) ).IsMatch( fileName ) ) { 
+            return true;
+          }
+        }
+        return false;
+      }
+      return false;
+    }
+
+    private bool _IgnoreFolderPatternsTests( string fileName ) {
+      if( this.localSyncConfig != null && this.localSyncConfig.ContainsKey( "ignore-folders" ) ) {
+        foreach( string pattern in this.localSyncConfig["ignore-folders"] as JArray ) {
+          if( ( new Regex( pattern ) ).IsMatch( fileName ) ) {
+            return true;
+          }
+        }
+        return false;
+      }
+      return false;
+    }
+
     private bool _ValidFileName( FileInfo info ) =>
-      !info.Name.StartsWith( "." ) && !info.Name.StartsWith( "_" );
+      ( !info.Name.StartsWith( "." ) && !info.Name.StartsWith( "_" ) && !this._IgnoreFilePatternsTests( info.Name ) ) || info.Name == "__sync-config.json";
 
     private bool _ValidDirectoryName( DirectoryInfo info ) =>
-      !info.Name.StartsWith( "." ) && ( !info.Name.StartsWith( "_" ) || info.Name == "__scripts" );
+      ( !info.Name.StartsWith( "." ) && !info.Name.StartsWith( "_" ) && !this._IgnoreFolderPatternsTests( info.Name ) ) || info.Name == "__scripts" || info.Name == "__sync.locks";
 
     private IEnumerable<FileInfo> _GetBucketLocalFiles( string path ) {
       List<FileInfo> files = new List<FileInfo>();
@@ -204,7 +233,9 @@ namespace UnrealFlow {
       Bucket bucket
     ) {
       foreach( string filePath in syncTable.GetPathList() ) {
+
         if( !localFilePaths.Contains( filePath ) ) {
+          Console.WriteLine( "Deleting remote file: " + filePath );
           await this._ExecuteRequest( async () => await bucket.client.DeleteObjectAsync( new DeleteObjectRequest() {
             BucketName = bucket.name,
             Key = filePath
@@ -299,9 +330,16 @@ namespace UnrealFlow {
       }
     }
 
+    private void _LoadLocalSyncSettings( string path ) {
+      if( File.Exists( Path.Combine( path, "__sync-config.json" ) ) ) {
+        this.localSyncConfig = JObject.Parse( File.ReadAllText( Path.Combine( path, "__sync-config.json" ) ) );
+      }
+    }
+
     public async Task SyncFolder( FolderSettings folderSettings ) {
       string syncPath = folderSettings.folderPath.Replace( "\\", "/" );
       Bucket bucket = folderSettings.bucket;
+      this._LoadLocalSyncSettings( syncPath );
       this._UpdateStatus( "Sync Started:\nGetting bucket file tree for '" + AppSettings.instance.serviceUri + "'" );
       IEnumerable<S3Object> bucketList = await this._GetBucketFileList( bucket.name, bucket.client );
       SyncTable syncTable = SyncTable.GetSyncTable( bucket.name );
@@ -328,6 +366,7 @@ namespace UnrealFlow {
       Bucket bucket = projectSettings.bucket;
       this._UpdateStatus( "Sync Started:\nGetting bucket file tree for '" + AppSettings.instance.serviceUri + "'" );
       string path = projectSettings.projectSyncFolder;
+      this._LoadLocalSyncSettings( Path.Combine( projectSettings.projectPath, path ) );
       //new string[] { "ImportsLarge", "Content/AssetsLarge", "Content/Megascans", "CarnalAssets" };
 
       IEnumerable<S3Object> bucketList = await this._GetBucketFileList( bucket.name, bucket.client );
