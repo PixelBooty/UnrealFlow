@@ -45,6 +45,20 @@ namespace UnrealFlow {
               if( projectData.ContainsKey( nameof( ProjectSettings.projectSyncFolder ) ) ) {
                 project.projectSyncFolder = (string)projectData[nameof( ProjectSettings.projectSyncFolder )];
               }
+              if( projectData.ContainsKey( nameof( ProjectSettings.syncOverrides ) ) ) {
+                JObject overridesData = projectData[nameof( ProjectSettings.syncOverrides )] as JObject;
+                if( overridesData != null ) {
+                  if( overridesData.ContainsKey( "toggledFolders" ) ) {
+                    project.syncOverrides.toggledFolders = overridesData["toggledFolders"].ToObject<string[]>();
+                  }
+                  if( overridesData.ContainsKey( "pushFiles" ) ) {
+                    project.syncOverrides.pushFiles = overridesData["pushFiles"].ToObject<string[]>();
+                  }
+                  if( overridesData.ContainsKey( "pullFiles" ) ) {
+                    project.syncOverrides.pullFiles = overridesData["pullFiles"].ToObject<string[]>();
+                  }
+                }
+              }
               this.projects.Add( projectKvp.Key, project );
             }
           }
@@ -62,6 +76,20 @@ namespace UnrealFlow {
               }
               if( folderData.ContainsKey( nameof( FolderSettings.folderPath ) ) ) {
                 folder.folderPath = (string)folderData[nameof( FolderSettings.folderPath )];
+              }
+              if( folderData.ContainsKey( nameof( FolderSettings.syncOverrides ) ) ) {
+                JObject overridesData = folderData[nameof( FolderSettings.syncOverrides )] as JObject;
+                if( overridesData != null ) {
+                  if( overridesData.ContainsKey( "toggledFolders" ) ) {
+                    folder.syncOverrides.toggledFolders = overridesData["toggledFolders"].ToObject<string[]>();
+                  }
+                  if( overridesData.ContainsKey( "pushFiles" ) ) {
+                    folder.syncOverrides.pushFiles = overridesData["pushFiles"].ToObject<string[]>();
+                  }
+                  if( overridesData.ContainsKey( "pullFiles" ) ) {
+                    folder.syncOverrides.pullFiles = overridesData["pullFiles"].ToObject<string[]>();
+                  }
+                }
               }
               this.folders.Add( folderKvp.Key, folder );
             }
@@ -97,6 +125,11 @@ namespace UnrealFlow {
         projectData[nameof( ProjectSettings.projectPath )] = project.Value.projectPath;
         projectData[nameof( ProjectSettings.syncName )] = project.Value.syncName;
         projectData[nameof( ProjectSettings.projectSyncFolder )] = project.Value.projectSyncFolder;
+        JObject projectOverrides = new JObject();
+        projectOverrides["toggledFolders"] = new JArray( project.Value.syncOverrides.toggledFolders );
+        projectOverrides["pushFiles"] = new JArray( project.Value.syncOverrides.pushFiles );
+        projectOverrides["pullFiles"] = new JArray( project.Value.syncOverrides.pullFiles );
+        projectData[nameof( ProjectSettings.syncOverrides )] = projectOverrides;
         baseProjects.Add( project.Key, projectData );
       }
       JObject baseFolders = new JObject();
@@ -105,12 +138,19 @@ namespace UnrealFlow {
         folderData[nameof( FolderSettings.displayName )] = folder.Value.displayName;
         folderData[nameof( FolderSettings.syncName )] = folder.Value.syncName;
         folderData[nameof( FolderSettings.folderPath )] = folder.Value.folderPath;
+        JObject folderOverrides = new JObject();
+        folderOverrides["toggledFolders"] = new JArray( folder.Value.syncOverrides.toggledFolders );
+        folderOverrides["pushFiles"] = new JArray( folder.Value.syncOverrides.pushFiles );
+        folderOverrides["pullFiles"] = new JArray( folder.Value.syncOverrides.pullFiles );
+        folderData[nameof( FolderSettings.syncOverrides )] = folderOverrides;
         baseFolders.Add( folder.Key, folderData );
       }
       baseObject[nameof( this.projects )] = baseProjects;
       baseObject[nameof( this.folders )] = baseFolders;
       return baseObject.ToString();
     }
+
+    public string user => this.apiKey.Contains( "@" ) ? this.apiKey.Split( '@' )[0] : this.apiKey;
 
     public string serviceUri = "";
     public string apiKey = "";

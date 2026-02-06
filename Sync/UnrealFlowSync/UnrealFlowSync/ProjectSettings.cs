@@ -6,6 +6,8 @@
     public string projectPath = "";
     public string projectSyncFolder = "";
 
+    public SyncOverrides syncOverrides = new SyncOverrides();
+
     public Bucket bucket => new Bucket() {
       apiKey = AppSettings.instance.apiKey,
       secret = AppSettings.instance.secret,

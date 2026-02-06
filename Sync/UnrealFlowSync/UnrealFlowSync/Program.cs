@@ -13,8 +13,13 @@ class Program {
 
     string keyId = null;
     string settingsPath = null;
+    bool locksOnly = false;
 
     foreach( string arg in args ) {
+      if( arg.Trim().ToLower() == "-locksonly" ) {
+        locksOnly = true;
+        continue;
+      }
       string[] parts = arg.Split( new[] { '=' }, 2 );
       if( parts.Length == 2 ) {
         string key = parts[0].Trim();
@@ -39,7 +44,12 @@ class Program {
       AppSettings appSettings = new AppSettings( settingsPath );
       if( appSettings.projects.ContainsKey( keyId ) ) {
         Console.WriteLine( "Sync Started for: " + appSettings.projects[keyId].displayName + ": " + appSettings.projects[keyId].projectPath + " " + appSettings.projects[keyId].syncName );
-        await ( new SyncSystem() ).SyncBucket( appSettings.projects[keyId] );
+        if( locksOnly ) {
+          await ( new SyncSystem() ).SyncLocks( appSettings.projects[keyId] );
+        }
+        else {
+          await ( new SyncSystem() ).SyncBucket( appSettings.projects[keyId] );
+        }
         Console.WriteLine( "Sync finished " + appSettings.projects[keyId].displayName );
       }
       else if( appSettings.folders.ContainsKey( keyId ) ) {

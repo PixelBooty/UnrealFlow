@@ -5,6 +5,8 @@
     public string syncName = "";
     public string folderPath = "";
 
+    public SyncOverrides syncOverrides = new SyncOverrides();
+
     public Bucket bucket => new Bucket() {
       apiKey = AppSettings.instance.apiKey,
       secret = AppSettings.instance.secret,

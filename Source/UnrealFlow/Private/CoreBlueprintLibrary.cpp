@@ -757,7 +757,7 @@ void UCoreBlueprintLibrary::WriteSyncLock( const FString &lockFilePath, const TA
 TArray<FLockRow> UCoreBlueprintLibrary::ReadSyncLock( const FString &lockFilePath ){
   FString fileContent = GetFileContentsAsText( lockFilePath );
   TArray<FLockRow> lockRows;
-  if( fileContent.IsEmpty() ){
+  if( fileContent.IsEmpty() ){  
     return lockRows;
   }
   TArray<FString> lines;
